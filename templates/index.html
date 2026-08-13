@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Matemáticas Interactivas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<base target="_blank">
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 Matemáticas Interactivas</h1>
+        <p>Resuelve problemas, mide tu velocidad y supera tu racha</p>
+    </div>
+
+    <div class="container">
+        <!-- Panel Principal -->
+        <div class="card problem-card" id="problemCard">
+            <div class="start-overlay" id="startOverlay">
+                <h3>¿Listo para empezar?</h3>
+                <p>Selecciona una dificultad y presiona el botón para generar tu primer problema.</p>
+                <button class="btn btn-primary" onclick="startGame()">🚀 Comenzar</button>
+            </div>
+
+            <div id="gameContent" class="hidden" style="display:flex;flex-direction:column;height:100%;">
+                <div class="problem-meta">
+                    <span class="badge badge-type" id="tipoBadge">Tipo</span>
+                    <span class="badge badge-difficulty" id="diffBadge">Dificultad</span>
+                    <span class="badge badge-timer" id="timerBadge">⏱ 0.0 s</span>
+                </div>
+                <div class="problem-text" id="problemText">Cargando...</div>
+                <div class="input-group">
+                    <input type="text" id="answerInput" placeholder="Tu respuesta..." autocomplete="off" onkeydown="if(event.key==='Enter')checkAnswer()">
+                    <button class="btn btn-primary" id="submitBtn" onclick="checkAnswer()">Responder</button>
+                    <button class="btn btn-success hidden" id="nextBtn" onclick="nextProblem()">Siguiente →</button>
+                </div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+
+        <!-- Panel de Estadísticas -->
+        <div class="stats-card card">
+            <h2>📊 Estadísticas</h2>
+
+            <div class="difficulty-selector">
+                <button class="diff-btn active" data-diff="1" onclick="setDifficulty(1)">Fácil</button>
+                <button class="diff-btn" data-diff="2" onclick="setDifficulty(2)">Intermedio</button>
+                <button class="diff-btn" data-diff="3" onclick="setDifficulty(3)">Avanzado</button>
+            </div>
+
+            <div class="type-selector">
+                <button class="type-btn active" data-type="aleatorio" onclick="setProblemType('aleatorio')">🎲 Aleatorio</button>
+                <button class="type-btn" data-type="suma_producto" onclick="setProblemType('suma_producto')">Suma y Producto</button>
+                <button class="type-btn" data-type="incognita_triple" onclick="setProblemType('incognita_triple')">Incógnita Triple</button>
+                <button class="type-btn" data-type="combinado_multiplicacion" onclick="setProblemType('combinado_multiplicacion')">Combinado</button>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">Preguntas</span>
+                <span class="stat-value accent" id="statTotal">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Correctas</span>
+                <span class="stat-value success" id="statCorrect">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Incorrectas</span>
+                <span class="stat-value danger" id="statWrong">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Precisión</span>
+                <span class="stat-value accent" id="statAccuracy">0 %</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="accuracyBar" style="width: 0%"></div>
+            </div>
+
+            <div style="margin-top: 16px; border-top: 1px solid rgba(51,65,85,0.5); padding-top: 12px;">
+                <div class="stat-row">
+                    <span class="stat-label">Tiempo promedio</span>
+                    <span class="stat-value" id="statAvgTime">0.0 s</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Mejor tiempo</span>
+                    <span class="stat-value success" id="statBestTime">0.0 s</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Peor tiempo</span>
+                    <span class="stat-value danger" id="statWorstTime">0.0 s</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; border-top: 1px solid rgba(51,65,85,0.5); padding-top: 12px;">
+                <div class="stat-row">
+                    <span class="stat-label">Racha actual</span>
+                    <span class="stat-value warning" id="statStreak">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Mejor racha</span>
+                    <span class="stat-value warning" id="statBestStreak">0</span>
+                </div>
+            </div>
+
+            <div class="streak-display" id="streakDisplay" style="display:none;">
+                <span class="flame">🔥</span>
+                <span class="streak-text">¡Racha de <span id="streakCount">0</span>!</span>
+            </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="card history-card">
+            <h2>📝 Historial</h2>
+            <div class="history-list" id="historyList">
+                <div style="color: var(--text-muted); text-align: center; padding: 20px;">Aún no hay respuestas</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
