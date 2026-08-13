@@ -1,7 +1,7 @@
 """
 app.py
 """
-
+import os
 import random
 
 from flask import Flask, render_template, request, jsonify, session
@@ -17,7 +17,8 @@ from database import (
 )
 
 app = Flask(__name__)
-app.secret_key = "matematicas-secreto-2026-modular"
+
+app.secret_key = os.environ["SECRET_KEY"]
 
 # Inicializar base de datos al arrancar
 init_db()
