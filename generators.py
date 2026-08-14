@@ -53,36 +53,109 @@ class GeneradorSumaProducto(GeneradorProblema):
         )
 
 
+import random
+from typing import Union, List, Tuple
+
+
 class GeneradorIncognitaTriple(GeneradorProblema):
-    """Genera ejercicios de operaciones de tres términos con una incógnita."""
-    NOMBRE_TIPO = "Incógnita Triple"
+    """
+    Genera ecuaciones lineales sencillas con tres términos en el lado izquierdo
+    y un resultado constante en el lado derecho: a + b + c = d.
+    
+    Uno de los términos (a, b o c) se reemplaza aleatoriamente por la incógnita 'x',
+    pudiendo llevar signo positivo (+x) o negativo (-x).
+    
+    Ejemplos de salida:
+        - x - 3 - 12 = -9
+        -8 + x + 10 = 6
+        15 - 4 - x = 2
+    """
+    NOMBRE_TIPO = "Ecuación Lineal (3 Términos)"
 
     def generar(self, dificultad: Union[int, NivelDificultad, None] = None) -> ProblemaMatematico:
         nivel = self._validar_dificultad(dificultad)
-        op1 = random.choice(["+", "-"])
-        op2 = random.choice(["+", "-"])
+
+        # 1. Definir rangos según el nivel de dificultad
         if nivel == NivelDificultad.FACIL:
-            a = random.randint(1, 15)
-            b = random.randint(1, 15)
-            incognita = random.randint(1, 15)
+            limite_val, limite_x = 10, 10
         elif nivel == NivelDificultad.INTERMEDIO:
-            a = random.randint(10, 40)
-            b = random.randint(10, 40)
-            incognita = random.randint(5, 30)
-        else:
-            a = random.randint(20, 100)
-            b = random.randint(20, 100)
-            incognita = random.randint(10, 50)
-        paso1 = a + b if op1 == "+" else a - b
-        c = paso1 + incognita if op2 == "+" else paso1 - incognita
-        pregunta = f"{a} {op1} {b} {op2} ? = {c}"
+            limite_val, limite_x = 25, 20
+        else:  # NivelDIFICIL / Avanzado
+            limite_val, limite_x = 50, 40
+
+        # 2. Generar el valor real de 'x' (evitamos el 0 para mantener el interés)
+        x_valor = random.choice([i for i in range(-limite_x, limite_x + 1) if i != 0])
+        
+        # 3. Elegir la posición de 'x' (0 = posición a, 1 = posición b, 2 = posición c)
+        posicion_x = random.randint(0, 2)
+        
+        # 4. Elegir el signo de 'x' (+1 o -1)
+        signo_x = random.choice([1, -1])
+
+        # 5. Generar valores numéricos constantes para las otras dos posiciones
+        rango_constantes = [i for i in range(-limite_val, limite_val + 1) if i != 0]
+        num_constante1 = random.choice(rango_constantes)
+        num_constante2 = random.choice(rango_constantes)
+
+        # 6. Construir la estructura de términos y calcular el término 'd' (resultado)
+        terminos_evaluados: List[int] = []
+        partes_pregunta: List[str] = []
+
+        idx_constante = 0
+        constantes = [num_constante1, num_constante2]
+
+        for i in range(3):
+            if i == posicion_x:
+                # Evaluación matemática del término con x
+                val_termino = signo_x * x_valor
+                terminos_evaluados.append(val_termino)
+                
+                # Representación textual de 'x'
+                str_x = self._formatear_termino_x(i, signo_x)
+                partes_pregunta.append(str_x)
+            else:
+                # Evaluación matemática del número constante
+                val_num = constantes[idx_constante]
+                idx_constante += 1
+                terminos_evaluados.append(val_num)
+                
+                # Representación textual del número
+                str_num = self._formatear_termino_numero(i, val_num)
+                partes_pregunta.append(str_num)
+
+        # 7. Calcular el lado derecho de la ecuación (d = a + b + c)
+        d = sum(terminos_evaluados)
+
+        # 8. Unir todos los componentes en una cadena legible
+        pregunta = f"{' '.join(partes_pregunta)} = {d}"
+
         return ProblemaMatematico(
             pregunta=pregunta,
-            solucion=incognita,
+            solucion=x_valor,
             dificultad=nivel,
             tipo_problema=self.NOMBRE_TIPO
         )
 
+    # -------------------------------------------------------------------------
+    # Métodos Auxiliares de Formato
+    # -------------------------------------------------------------------------
+
+    def _formatear_termino_x(self, posicion: int, signo: int) -> str:
+        """Da formato a 'x' o '-x' dependiendo de si es el primer término o subsiguiente."""
+        if posicion == 0:
+            return "x" if signo == 1 else "- x"
+        else:
+            return "+ x" if signo == 1 else "- x"
+
+    def _formatear_termino_numero(self, posicion: int, numero: int) -> str:
+        """Da formato a los números con sus respectivos signos y espacios."""
+        if posicion == 0:
+            return f"{numero}"
+        else:
+            if numero >= 0:
+                return f"+ {numero}"
+            else:
+                return f"- {abs(numero)}"
 
 class GeneradorCombinadoMultiplicacion(GeneradorProblema):
     """Genera ejercicios combinados de multiplicación y suma/resta."""

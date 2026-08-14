@@ -2,11 +2,16 @@
 
 let currentProblem = null;
 let difficulty = 1;
+let problemType = 'aleatorio';
 let startTime = 0;
 let timerInterval = null;
 let answered = false;
+let isPaused = false;
+let pausedTime = 0;
+let gameStarted = false;
 let stats = {
     total: 0, correctas: 0, incorrectas: 0,
+    precision: 0, tiempo_promedio: 0, mejor_tiempo: 0, peor_tiempo: 0,
     tiempos: [], racha_actual: 0, mejor_racha: 0,
     historial: []
 };
@@ -16,23 +21,41 @@ function setDifficulty(d) {
     document.querySelectorAll('.diff-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.diff) === d);
     });
+    // Auto-generar nuevo problema si el juego ya empezó
+    if (gameStarted && !answered) {
+        nextProblem();
+    }
+}
+
+function setProblemType(type) {
+    problemType = type;
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    // Auto-generar nuevo problema si el juego ya empezó
+    if (gameStarted && !answered) {
+        nextProblem();
+    }
 }
 
 function startGame() {
+    gameStarted = true;
     document.getElementById('startOverlay').classList.add('hidden');
     document.getElementById('gameContent').classList.remove('hidden');
     nextProblem();
 }
 
 function startTimer() {
-    startTime = Date.now();
+    startTime = Date.now() - pausedTime;
+    pausedTime = 0;
     const badge = document.getElementById('timerBadge');
-    badge.classList.remove('urgent');
+    badge.classList.remove('urgent', 'paused');
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
+        if (isPaused) return;
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
         badge.textContent = `⏱ ${elapsed} s`;
-        if (elapsed > 10) badge.classList.add('urgent');
+        if (elapsed > 30) badge.classList.add('urgent');
     }, 100);
 }
 
@@ -41,17 +64,34 @@ function stopTimer() {
     return ((Date.now() - startTime) / 1000);
 }
 
-let problemType = 'aleatorio';
+function togglePause() {
+    if (!gameStarted || answered) return;
+    isPaused = !isPaused;
+    const overlay = document.getElementById('pauseOverlay');
+    const input = document.getElementById('answerInput');
+    const pauseBadge = document.getElementById('pauseBtnBadge');
 
-function setProblemType(type) {
-    problemType = type;
-    document.querySelectorAll('.type-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.type === type);
-    });
+    if (isPaused) {
+        pausedTime = Date.now() - startTime;
+        clearInterval(timerInterval);
+        overlay.classList.add('show');
+        input.disabled = true;
+        pauseBadge.textContent = '▶️ Reanudar';
+        pauseBadge.classList.add('paused');
+    } else {
+        overlay.classList.remove('show');
+        input.disabled = false;
+        input.focus();
+        pauseBadge.textContent = '⏸️ Pausa';
+        pauseBadge.classList.remove('paused');
+        startTimer();
+    }
 }
 
 async function nextProblem() {
     answered = false;
+    isPaused = false;
+    pausedTime = 0;
     document.getElementById('answerInput').value = '';
     document.getElementById('answerInput').disabled = false;
     document.getElementById('answerInput').focus();
@@ -59,6 +99,9 @@ async function nextProblem() {
     document.getElementById('nextBtn').classList.add('hidden');
     document.getElementById('feedback').classList.remove('show');
     document.getElementById('problemText').textContent = 'Cargando...';
+    document.getElementById('pauseOverlay').classList.remove('show');
+    document.getElementById('pauseBtnBadge').textContent = '⏸️ Pausa';
+    document.getElementById('pauseBtnBadge').classList.remove('paused');
 
     const url = `/api/problem?difficulty=${difficulty}&type=${encodeURIComponent(problemType)}`;
     const res = await fetch(url);
@@ -71,7 +114,7 @@ async function nextProblem() {
 }
 
 async function checkAnswer() {
-    if (answered) return;
+    if (answered || isPaused) return;
     const input = document.getElementById('answerInput');
     const raw = input.value.trim();
     if (!raw) return;
@@ -114,7 +157,6 @@ async function checkAnswer() {
     fb.className = 'feedback show ' + (data.correct ? 'correct' : 'incorrect');
     if (data.correct) {
         fb.innerHTML = `✅ ¡Correcto! ${data.message}`;
-        if (stats.racha_actual >= 3) showConfetti();
     } else {
         fb.innerHTML = `❌ Incorrecto. ${data.message}`;
     }
@@ -179,4 +221,35 @@ function showConfetti() {
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 3000);
     }
+}
+
+async function resetStats() {
+    if (stats.total === 0) {
+        alert("No hay estadísticas para reiniciar.");
+        return;
+    }
+    if (!confirm("¿Seguro que quieres reiniciar todas tus estadísticas? Esta acción no se puede deshacer.")) {
+        return;
+    }
+    await fetch('/api/reset', { method: 'POST' });
+
+    // Limpiar estado local
+    stats = {
+        total: 0, correctas: 0, incorrectas: 0,
+        precision: 0, tiempo_promedio: 0, mejor_tiempo: 0, peor_tiempo: 0,
+        tiempos: [], racha_actual: 0, mejor_racha: 0,
+        historial: []
+    };
+
+    renderStats();
+    renderHistory();
+    document.getElementById('feedback').classList.remove('show');
+}
+
+function exportPDF() {
+    if (stats.total === 0) {
+        alert('Aún no tienes estadísticas para exportar. ¡Resuelve algunos problemas primero!');
+        return;
+    }
+    window.open('/api/export_pdf', '_blank');
 }

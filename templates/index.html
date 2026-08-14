@@ -2,15 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 Matemáticas Interactivas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matemáticas Interactivas</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <base target="_blank">
 </head>
 <body>
     <div class="header">
-        <h1>🧠 Matemáticas Interactivas</h1>
+        <h1>Matemáticas Interactivas</h1>
         <p>Resuelve problemas, mide tu velocidad y supera tu racha</p>
     </div>
 
@@ -23,11 +23,20 @@
                 <button class="btn btn-primary" onclick="startGame()">🚀 Comenzar</button>
             </div>
 
+            <!-- Pause Overlay -->
+            <div class="pause-overlay" id="pauseOverlay">
+                <div class="pause-icon">⏸️</div>
+                <h3>Juego Pausado</h3>
+                <p>Presiona continuar para reanudar</p>
+                <button class="btn btn-success" onclick="togglePause()">▶️ Continuar</button>
+            </div>
+
             <div id="gameContent" class="hidden" style="display:flex;flex-direction:column;height:100%;">
                 <div class="problem-meta">
                     <span class="badge badge-type" id="tipoBadge">Tipo</span>
                     <span class="badge badge-difficulty" id="diffBadge">Dificultad</span>
                     <span class="badge badge-timer" id="timerBadge">⏱ 0.0 s</span>
+                    <span class="badge badge-timer" id="pauseBtnBadge" style="cursor:pointer;" onclick="togglePause()">⏸️ Pausa</span>
                 </div>
                 <div class="problem-text" id="problemText">Cargando...</div>
                 <div class="input-group">
@@ -106,6 +115,9 @@
                 <span class="flame">🔥</span>
                 <span class="streak-text">¡Racha de <span id="streakCount">0</span>!</span>
             </div>
+
+            <button class="btn btn-danger" onclick="resetStats()" style="width:100%;margin-top:10px;">🗑️ Reiniciar estadísticas</button>
+            <button class="btn btn-pdf" onclick="exportPDF()">📄 Guardar estadísticas en PDF</button>
         </div>
 
         <!-- Historial -->
