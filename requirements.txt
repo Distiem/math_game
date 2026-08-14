@@ -1,3 +1,4 @@
 # Matemáticas Interactivas — Dependencias
 
 Flask>=2.3.0
+gunicorn

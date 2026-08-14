@@ -1,6 +1,3 @@
-"""
-app.py
-"""
 import os
 import random
 
@@ -18,7 +15,8 @@ from database import (
 
 app = Flask(__name__)
 
-app.secret_key = os.environ["SECRET_KEY"]
+# Clave secreta segura por defecto para desarrollo/producción si no se pasa por entorno
+app.secret_key = os.environ.get("SECRET_KEY", "clave-secreta-por-defecto-muy-segura")
 
 # Inicializar base de datos al arrancar
 init_db()
@@ -148,10 +146,11 @@ def api_reset():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# MAIN
+# MAIN (Solo para desarrollo local con python app.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     print("=" * 60)
+    print("Iniciando servidor de desarrollo local...")
     print("=" * 60)
     app.run(debug=False, host="0.0.0.0", port=5000)
