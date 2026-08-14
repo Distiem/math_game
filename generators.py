@@ -77,11 +77,11 @@ class GeneradorIncognitaTriple(GeneradorProblema):
 
         # 1. Definir rangos según el nivel de dificultad
         if nivel == NivelDificultad.FACIL:
-            limite_val, limite_x = 10, 10
+            limite_val, limite_x = 15, 15
         elif nivel == NivelDificultad.INTERMEDIO:
-            limite_val, limite_x = 25, 20
+            limite_val, limite_x = 25, 25
         else:  # NivelDIFICIL / Avanzado
-            limite_val, limite_x = 50, 40
+            limite_val, limite_x = 50, 100
 
         # 2. Generar el valor real de 'x' (evitamos el 0 para mantener el interés)
         x_valor = random.choice([i for i in range(-limite_x, limite_x + 1) if i != 0])
