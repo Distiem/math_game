@@ -28,23 +28,55 @@ class GeneradorProblema(ABC):
 
 class GeneradorSumaProducto(GeneradorProblema):
     """Genera ejercicios donde se debe hallar dos números a partir de su suma y su producto."""
+
     NOMBRE_TIPO = "Suma y Producto"
 
-    def generar(self, dificultad: Union[int, NivelDificultad, None] = None) -> ProblemaMatematico:
+    def __init__(self):
+        super().__init__()
+        self._ejercicios_usados = set()
+
+    def generar(
+        self,
+        dificultad: Union[int, NivelDificultad, None] = None
+    ) -> ProblemaMatematico:
+
         nivel = self._validar_dificultad(dificultad)
-        if nivel == NivelDificultad.FACIL:
-            x = random.randint(1, 10)
-            y = random.randint(1, 10)
-        elif nivel == NivelDificultad.INTERMEDIO:
-            x = random.randint(5, 20)
-            y = random.randint(5, 20)
-        else:
-            rango_negativos = [i for i in range(-15, 16) if i != 0]
-            x = random.choice(rango_negativos)
-            y = random.choice(rango_negativos)
-        suma = x + y
-        producto = x * y
-        pregunta = f"Encuentra dos números 'x' e 'y' tales que:\n  x + y = {suma}\n  x × y = {producto}"
+
+        while True:
+
+            if nivel == NivelDificultad.FACIL:
+                x = random.randint(2, 10)
+                y = random.randint(1, 10)
+
+            elif nivel == NivelDificultad.INTERMEDIO:
+                x = random.randint(5, 20)
+                y = random.randint(5, 20)
+
+            else:
+                rango = [
+                    i for i in range(-15, 16)
+                    if i != 0
+                ]
+
+                x = random.choice(rango)
+                y = random.choice(rango)
+
+            suma = x + y
+            producto = x * y
+
+            # La pregunta queda determinada por suma y producto.
+            clave = (nivel, suma, producto)
+
+            if clave not in self._ejercicios_usados:
+                self._ejercicios_usados.add(clave)
+                break
+
+        pregunta = (
+            f"Encuentra dos números 'x' e 'y' tales que:\n"
+            f"  x + y = {suma}\n"
+            f"  x × y = {producto}"
+        )
+
         return ProblemaMatematico(
             pregunta=pregunta,
             solucion=(x, y),
@@ -52,82 +84,110 @@ class GeneradorSumaProducto(GeneradorProblema):
             tipo_problema=self.NOMBRE_TIPO
         )
 
-
 import random
 from typing import Union, List, Tuple
 
 
 class GeneradorIncognitaTriple(GeneradorProblema):
     """
-    Genera ecuaciones lineales sencillas con tres términos en el lado izquierdo
-    y un resultado constante en el lado derecho: a + b + c = d.
-    
-    Uno de los términos (a, b o c) se reemplaza aleatoriamente por la incógnita 'x',
-    pudiendo llevar signo positivo (+x) o negativo (-x).
-    
-    Ejemplos de salida:
-        - x - 3 - 12 = -9
-        -8 + x + 10 = 6
-        15 - 4 - x = 2
-    """
-    NOMBRE_TIPO = "Ecuación Lineal (3 Términos)"
+    Genera ecuaciones lineales simples equivalentes a la versión Rust:
 
-    def generar(self, dificultad: Union[int, NivelDificultad, None] = None) -> ProblemaMatematico:
+        ax + b = c
+
+    Los rangos de x, a y b dependen del nivel de dificultad.
+    Tanto x como a y b pueden tener signo positivo o negativo.
+
+    Ejemplos de salida:
+        - 4x + 7 = 31
+        - -3x - 5 = 28
+        - 8x + 12 = -52
+    """
+
+    NOMBRE_TIPO = "Ecuación Lineal Simple"
+
+    def generar(
+        self,
+        dificultad: Union[int, NivelDificultad, None] = None
+    ) -> ProblemaMatematico:
+
         nivel = self._validar_dificultad(dificultad)
 
-        # 1. Definir rangos según el nivel de dificultad
+        # ---------------------------------------------------------------------
+        # 1. Rangos equivalentes a obtener_rangos() de Rust
+        # ---------------------------------------------------------------------
+
         if nivel == NivelDificultad.FACIL:
-            limite_val, limite_x = 15, 15
+            rango_x = (3, 15)
+            rango_a = (2, 5)
+            rango_b = (1, 10)
+
         elif nivel == NivelDificultad.INTERMEDIO:
-            limite_val, limite_x = 25, 25
+            rango_x = (10, 20)
+            rango_a = (4, 8)
+            rango_b = (5, 15)
+
         else:  # NivelDIFICIL / Avanzado
-            limite_val, limite_x = 50, 100
+            rango_x = (20, 30)
+            rango_a = (6, 12)
+            rango_b = (10, 25)
 
-        # 2. Generar el valor real de 'x' (evitamos el 0 para mantener el interés)
-        x_valor = random.choice([i for i in range(-limite_x, limite_x + 1) if i != 0])
-        
-        # 3. Elegir la posición de 'x' (0 = posición a, 1 = posición b, 2 = posición c)
-        posicion_x = random.randint(0, 2)
-        
-        # 4. Elegir el signo de 'x' (+1 o -1)
-        signo_x = random.choice([1, -1])
+        # ---------------------------------------------------------------------
+        # 2. Generar x
+        # ---------------------------------------------------------------------
 
-        # 5. Generar valores numéricos constantes para las otras dos posiciones
-        rango_constantes = [i for i in range(-limite_val, limite_val + 1) if i != 0]
-        num_constante1 = random.choice(rango_constantes)
-        num_constante2 = random.choice(rango_constantes)
+        x_valor = random.randint(*rango_x)
 
-        # 6. Construir la estructura de términos y calcular el término 'd' (resultado)
-        terminos_evaluados: List[int] = []
-        partes_pregunta: List[str] = []
+        # Equivalente a:
+        #
+        # if rng.gen_bool(0.5) {
+        #     x = -x;
+        # }
 
-        idx_constante = 0
-        constantes = [num_constante1, num_constante2]
+        if random.random() < 0.5:
+            x_valor = -x_valor
 
-        for i in range(3):
-            if i == posicion_x:
-                # Evaluación matemática del término con x
-                val_termino = signo_x * x_valor
-                terminos_evaluados.append(val_termino)
-                
-                # Representación textual de 'x'
-                str_x = self._formatear_termino_x(i, signo_x)
-                partes_pregunta.append(str_x)
-            else:
-                # Evaluación matemática del número constante
-                val_num = constantes[idx_constante]
-                idx_constante += 1
-                terminos_evaluados.append(val_num)
-                
-                # Representación textual del número
-                str_num = self._formatear_termino_numero(i, val_num)
-                partes_pregunta.append(str_num)
+        # ---------------------------------------------------------------------
+        # 3. Generar a con signo aleatorio
+        # ---------------------------------------------------------------------
 
-        # 7. Calcular el lado derecho de la ecuación (d = a + b + c)
-        d = sum(terminos_evaluados)
+        a = random.randint(*rango_a)
 
-        # 8. Unir todos los componentes en una cadena legible
-        pregunta = f"{' '.join(partes_pregunta)} = {d}"
+        if random.random() < 0.5:
+            a = -a
+
+        # ---------------------------------------------------------------------
+        # 4. Generar b con signo aleatorio
+        # ---------------------------------------------------------------------
+
+        b = random.randint(*rango_b)
+
+        if random.random() < 0.5:
+            b = -b
+
+        # ---------------------------------------------------------------------
+        # 5. Calcular c
+        #
+        #       ax + b = c
+        #
+        # Esto garantiza que x sea siempre una solución exacta.
+        # ---------------------------------------------------------------------
+
+        c = (a * x_valor) + b
+
+        # ---------------------------------------------------------------------
+        # 6. Formatear b exactamente como en Rust
+        # ---------------------------------------------------------------------
+
+        if b < 0:
+            signo_b = f"- {abs(b)}"
+        else:
+            signo_b = f"+ {b}"
+
+        pregunta = f"{a}x {signo_b} = {c}"
+
+        # ---------------------------------------------------------------------
+        # 7. Crear el problema
+        # ---------------------------------------------------------------------
 
         return ProblemaMatematico(
             pregunta=pregunta,
@@ -136,60 +196,136 @@ class GeneradorIncognitaTriple(GeneradorProblema):
             tipo_problema=self.NOMBRE_TIPO
         )
 
-    # -------------------------------------------------------------------------
-    # Métodos Auxiliares de Formato
-    # -------------------------------------------------------------------------
-
-    def _formatear_termino_x(self, posicion: int, signo: int) -> str:
-        """Da formato a 'x' o '-x' dependiendo de si es el primer término o subsiguiente."""
-        if posicion == 0:
-            return "x" if signo == 1 else "- x"
-        else:
-            return "+ x" if signo == 1 else "- x"
-
-    def _formatear_termino_numero(self, posicion: int, numero: int) -> str:
-        """Da formato a los números con sus respectivos signos y espacios."""
-        if posicion == 0:
-            return f"{numero}"
-        else:
-            if numero >= 0:
-                return f"+ {numero}"
-            else:
-                return f"- {abs(numero)}"
-
 class GeneradorCombinadoMultiplicacion(GeneradorProblema):
-    """Genera ejercicios combinados de multiplicación y suma/resta."""
-    NOMBRE_TIPO = "Combinado Multiplicación"
+    """
+    Genera ecuaciones con paréntesis equivalentes a la versión Rust:
 
-    def generar(self, dificultad: Union[int, NivelDificultad, None] = None) -> ProblemaMatematico:
+        a(x + b) - d = c
+
+    Los rangos de x, a, b y d dependen del nivel de dificultad.
+
+    Ejemplos de salida:
+        - 3(x + 5) - 7 = 38
+        - -6(x - 8) + 12 = -18
+        - 10(x + 15) - 20 = 80
+    """
+
+    NOMBRE_TIPO = "Ecuación con Paréntesis"
+
+    def generar(
+        self,
+        dificultad: Union[int, NivelDificultad, None] = None
+    ) -> ProblemaMatematico:
+
         nivel = self._validar_dificultad(dificultad)
-        a = random.choice([i for i in range(-9, 10) if i != 0])
+
+        # ---------------------------------------------------------------------
+        # 1. Rangos equivalentes a obtener_rangos() de Rust
+        # ---------------------------------------------------------------------
+
         if nivel == NivelDificultad.FACIL:
-            limite_b, limite_c = 10, 20
+            rango_x = (3, 15)
+            rango_a = (2, 5)
+            rango_b = (1, 10)
+            rango_d = (1, 10)
+
         elif nivel == NivelDificultad.INTERMEDIO:
-            limite_b, limite_c = 15, 50
+            rango_x = (10, 20)
+            rango_a = (4, 8)
+            rango_b = (5, 15)
+            rango_d = (5, 15)
+
+        else:  # NivelDIFICIL / Avanzado
+            rango_x = (20, 30)
+            rango_a = (6, 12)
+            rango_b = (10, 25)
+            rango_d = (10, 25)
+
+        # ---------------------------------------------------------------------
+        # 2. Generar x con signo aleatorio
+        # ---------------------------------------------------------------------
+
+        x_valor = random.randint(*rango_x)
+
+        if random.random() < 0.5:
+            x_valor = -x_valor
+
+        # ---------------------------------------------------------------------
+        # 3. Generar a con signo aleatorio
+        # ---------------------------------------------------------------------
+
+        a = random.randint(*rango_a)
+
+        if random.random() < 0.5:
+            a = -a
+
+        # ---------------------------------------------------------------------
+        # 4. Generar b con signo aleatorio
+        # ---------------------------------------------------------------------
+
+        b = random.randint(*rango_b)
+
+        if random.random() < 0.5:
+            b = -b
+
+        # ---------------------------------------------------------------------
+        # 5. Generar d con signo aleatorio
+        # ---------------------------------------------------------------------
+
+        d = random.randint(*rango_d)
+
+        if random.random() < 0.5:
+            d = -d
+
+        # ---------------------------------------------------------------------
+        # 6. Calcular c
+        #
+        #       a(x + b) - d = c
+        #
+        # Esto garantiza que x sea siempre una solución exacta.
+        # ---------------------------------------------------------------------
+
+        c = a * (x_valor + b) - d
+
+        # ---------------------------------------------------------------------
+        # 7. Formatear b
+        # ---------------------------------------------------------------------
+
+        if b < 0:
+            signo_b = f"- {abs(b)}"
         else:
-            limite_b, limite_c = 25, 100
-        rango_b = [i for i in range(-limite_b, limite_b + 1) if i != 0]
-        rango_c = [i for i in range(-limite_c, limite_c + 1) if i != 0]
-        b = random.choice(rango_b)
-        c = random.choice(rango_c)
-        operador = random.choice(["+", "-"])
-        if operador == "+":
-            respuesta = (a * b) + c
+            signo_b = f"+ {b}"
+
+        # ---------------------------------------------------------------------
+        # 8. Formatear d
+        #
+        # Rust hace:
+        #
+        # d < 0  -> "+ abs(d)"
+        # d >= 0 -> "- d"
+        #
+        # porque la expresión es:
+        #
+        #       a(x + b) - d
+        # ---------------------------------------------------------------------
+
+        if d < 0:
+            signo_d = f"+ {abs(d)}"
         else:
-            respuesta = (a * b) - c
-        str_a = f"{a}"
-        str_b = f"({b})" if b < 0 else f"{b}"
-        str_c = f"({c})" if c < 0 else f"{c}"
-        pregunta = f"{str_a} × {str_b} {operador} {str_c} = ?"
+            signo_d = f"- {d}"
+
+        pregunta = f"{a}(x {signo_b}) {signo_d} = {c}"
+
+        # ---------------------------------------------------------------------
+        # 9. Crear el problema
+        # ---------------------------------------------------------------------
+
         return ProblemaMatematico(
             pregunta=pregunta,
-            solucion=respuesta,
+            solucion=x_valor,
             dificultad=nivel,
             tipo_problema=self.NOMBRE_TIPO
         )
-
 
 # ── Registro de generadores ──────────────────────────────────────────────────
 GENERADORES = {
