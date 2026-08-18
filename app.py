@@ -121,7 +121,7 @@ def api_check():
 
     # ── Mensaje de feedback ──────────────────────────────────────────────────
     if correcto:
-        mensaje = f"La respuesta era {sol}."
+        mensaje = f"¡Bien hecho!"
         if tiempo < 3:
             mensaje += " ¡Rápido!"
     else:
