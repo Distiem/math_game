@@ -40,7 +40,7 @@
                 </div>
                 <div class="problem-text" id="problemText">Cargando...</div>
                 <div class="input-group">
-                    <input type="text" id="answerInput" placeholder="Tu respuesta..." autocomplete="off" inputmode="decimal" oninput="this.value=this.value.replace(/[^0-9+\-*/.,() ]/g,'')" onkeydown="if(event.key==='Enter')checkAnswer()">
+                    <input type="text" id="answerInput" placeholder="Tu respuesta..." autocomplete="off" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9+\-*/.,() ]/g,'')" onkeydown="if(event.key==='Enter')checkAnswer()">
                     <button class="btn btn-primary" id="submitBtn" onclick="checkAnswer()">Responder</button>
                     <button class="btn btn-success hidden" id="nextBtn" onclick="nextProblem()">Siguiente →</button>
                 </div>
